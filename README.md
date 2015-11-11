@@ -37,17 +37,23 @@ I'm not sure what to write here, need to look this up a bit better, but certainl
 
 ###3. Demultiplexing your dataset.
 
+NOTE: **The first step in any RADseq library is always demultiplexing. You are now picking out the barcode reads which are found at the beginning of your illumina read in order to separate them into the individual samples. you only need two things, the code that you will use, and a barcodes/samples file where you have BOTH barcodes (adapter and primer index) and the name you want you sample to be (otherwise the file name will be the barcode, which is zero informative for any human being). Naming the files in a smart way will save headaches down the line. Also, if you have repeated barcodes across different libraries, then not changing the names from teh default barcode names will mix your samples eventually. ** 
+
 If you have separate libraries with overlapping barcodes, you need to demultiplex them separately since that is the only sample identifier you have (if you have combinatorial barcodes as in ddRAD, then as long as both adapter and PCR index don't overlap they can be demultiplexed together). 
 
-De-multiplexing will be performed using the program [process_radtags](http://creskolab.uoregon.edu/stacks/comp/process_radtags.php) individually for each library within its directory, and renamed with sample names within Stacks using the appropriate barcodes/names text files, found [here](https://github.com/pesalerno/Pseudacris-island-genomics/blob/master/barcodes-1933.txt).
+De-multiplexing will be performed using the program [process_radtags](http://creskolab.uoregon.edu/stacks/comp/process_radtags.php) individually for each library within its directory, and renamed with sample names within Stacks using the appropriate barcodes/names text files, found [here](https://github.com/pesalerno/Genomics-Intro-workshop/tree/master/1-demultiplexing). The barcodes file is a simple text-delimited file with first column being adapter, second column being primer index, and third being the final file name you want (ideally an individual sample code, and maybe a locality code as well). 
 
-- The commands for process_radtags for the Paired-end libraries are:
+**WARNING**: _NEVER_ edit text files in word or something similar... it needs to be in a simple text editor such as text wrangler or BBedit. Also, always edit these files while seeing "invisible characters". 
+
+You need to have the appropriate barcode files within the appropriate library folder if demultiplexing libraries separately. 
+
+- The commands for process_radtags for the Paired-end libraries that we will use are:
 
 		process_radtags -P -p ./PE-lib-1610/ -b barcodes-1610.txt -i gzfastq - \
 		o ./processed-1610/ -e sbfI -c -q -r -D
 	(example for library #1610 for *Xantusia*)
  
-
+This command needs to be set up within the job scheduler (file of type ***.sh***), so set it up in the cluster (either set up the file on your computer and scp to cluster, or edit in cluster with ***nano*** text editor).
 
 #####3b. Merge libraries into single ***denovo*** directory
 
