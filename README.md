@@ -5,22 +5,71 @@
 The following document follows a step-by-step protocol for processing genomic data, starting from downloading the dataset into your cluster space and finishing with some simple population analyses in R. It assumes little to no knowledge of unix, servers, and programming.
 
 
-###1. Downloading files into the raw data directory
-Before anything, make a directory for the project, in this case we are calling it Genomics-Bioinformatics-2015, so:
+###1. Getting started
+/ / / / / DISCLAIMER: I've never taken a bioinformatics course, it's all been self-taught and picked up in little pieces here and there. There are for sure better ways for doing all of these things, but my aim with this document is to be clear and helpful for people who are starting out just like I did, since I never really had an easy time starting due to being self-taught and not "a natural" at coding. /
+/
+/
+/
+/
+/
+
+
+Before anything, make a directory for the project, in this case we are calling it Genomics-Bioinformatics-2015. One tip for unixing, always make names of files and directories have ZERO spaces in them.... ZERO. 
 
 	mkdir Genomics-Bioinformatics-2015
 
-****tip: if you have long names but that start with unique identifiers, you can always just type the first letter and *"tab complete"* the rest of the file name.
+---> tip: if you have long names that start with unique identifiers, you can always just type the first letter and *"tab complete"* the rest of the file name.
 
 Move into that directory
 
 	cd Genomics-Bioinformatics-2015  ###try the tab completion trick for this command
 
 
-Second, you need to know where the file is located in the web (i.e. directly from the sequencing facility), then you can copy/paste the address into the terminal window (from the directory where you wish to copy to) and use the wget command for downloading as follows:
 
-	mkdir raw data ##make new directory for your data
-	cd raw data
+Second, clone the git repository. Even though you can do this easily on the web and without an account, let's try doing it on terminal! Github is like the GenBank of coding.... let's give it a try, since it's really good practice to share code, to collaborate efficiently through version control software, and to start on this as early as possible!! (I certainly started too late).
+
+1.Create a git account online [here](https://github.com/join), choosing the free plan and open repositories.
+
+2.Download/Install git on your computer [here](http://git-scm.com/downloads)
+		
+
+3.Initialize and fork/clone repository for the class into the directory for the course
+ 
+	git init ##within directory that you want the repository to be cloned to
+	git clone https://github.com/pesalerno/Genomics-Intro-workshop
+
+Now you should have all the materials for the course organized in the different directories. 
+
+#####Side bar: more on git 
+If you want to practice more with git, now that you have an account and the program installed, you can make your new repository (***do this online instead of locally to simplify things***) for your own files/changes that you have for this workshop, within terminal in the following way:
+
+	git init ##within the folder you want to work from 
+	git clone <web-address-of-new-directory>
+---> make whatever changes, add files, folders, create new text documents, then if you type:
+
+	git status
+	
+you should see all the changes you've made to your repository. You can add the individual files or all at the same time, with:
+
+	git add <name-of-file.txt>
+
+if you check the status again, you will see this one file changed from "modified" to "added and waiting for commit", then you can commit to the change you just made:
+
+	git commit -m "add informative message for this change"
+
+and finally, once you've made your commit(s) to your change(s), then you can "push" back these changes to the original online repository (so far nothing has been changed other than on your personal computer):
+
+	git push origin master
+
+and now if you refresh the page you should have the new changes already updated on your online repository!!
+
+
+###2. Downloading files into the raw data directory
+
+First, you need to know where the file is located in the web (i.e. directly from the sequencing facility), then you can copy/paste the address into the terminal window **on the cluster** (from the directory where you wish to copy to) and use the wget command for downloading as follows:
+
+	mkdir raw-data ##make new directory for your data
+	cd raw-data
 	wget <<web-address>>
 	ls ##after downloading is done, do you see all the files you expected to see?
 
@@ -30,18 +79,30 @@ Alternatively, if moving raw data files from your own computer to the cluster, t
 	scp raw-data-file.gz person@clustername.institution/path/to/file/destination
 
 
-###2. Making sure your path is set up properly for the program to run and the data to be found
+###2. Adding the path for stacks in your bash profile 
 
-I'm not sure what to write here, need to look this up a bit better, but certainly something we should check before getting started. 
+The server needs to know which paths (directories) to look for when you run a program. Thus, you need to set up paths for specific programs that are not directly within your own home directory in the cluster/server. This file is hidden, but you can see it (and whatever is in it)by typing:
+
+	cat .bash_profile
+
+This command simply prints the document, but you cannot alter it. The reason it's invisible is that it's protected, because your paths are important!! To edit this file, write:
+
+	nano .bash_profile
+	
+Now you can edit it. Add in a new line to your bash profile as follows:
+
+	PATH=$PATH:/opt/software/stacks-1.26/bin/
+
+Now it will know to search within that directory when you give it a given command. 
 
 
-###3. Demultiplexing your dataset.
+###3. Demultiplexing your dataset with Stacks.
 
-NOTE: **The first step in any RADseq library is always demultiplexing. You are now picking out the barcode reads which are found at the beginning of your illumina read in order to separate them into the individual samples. you only need two things, the code that you will use, and a barcodes/samples file where you have BOTH barcodes (adapter and primer index) and the name you want you sample to be (otherwise the file name will be the barcode, which is zero informative for any human being). Naming the files in a smart way will save headaches down the line. Also, if you have repeated barcodes across different libraries, then not changing the names from teh default barcode names will mix your samples eventually. ** 
+NOTE: **The first step in any RADseq library is always demultiplexing. You are now picking out the barcode reads which are found at the beginning of your illumina read in order to separate them into the individual samples. You only need two things, the code that you will use, and a barcodes/samples file where you have BOTH barcodes (adapter and primer index) and the name you want you sample to be (otherwise the file name will be the barcode, which is zero informative for any human being). Naming the files in a smart way will save headaches down the line. Also, if you have repeated barcodes across different libraries, then not changing the names from thw default barcode names will mix your samples eventually. ** 
 
 If you have separate libraries with overlapping barcodes, you need to demultiplex them separately since that is the only sample identifier you have (if you have combinatorial barcodes as in ddRAD, then as long as both adapter and PCR index don't overlap they can be demultiplexed together). 
 
-De-multiplexing will be performed using the program [process_radtags](http://creskolab.uoregon.edu/stacks/comp/process_radtags.php) individually for each library within its directory, and renamed with sample names within Stacks using the appropriate barcodes/names text files, found [here](https://github.com/pesalerno/Genomics-Intro-workshop/tree/master/1-demultiplexing). The barcodes file is a simple text-delimited file with first column being adapter, second column being primer index, and third being the final file name you want (ideally an individual sample code, and maybe a locality code as well). 
+De-multiplexing is performed using the program [process_radtags](http://creskolab.uoregon.edu/stacks/comp/process_radtags.php) individually for each library within its directory, and renamed with sample names within Stacks using the appropriate barcodes/names text files, found [here](https://github.com/pesalerno/Genomics-Intro-workshop/tree/master/1-demultiplexing). The barcodes file is a simple text-delimited file with first column being adapter, second column being primer index, and third being the final file name you want (ideally an individual sample code, and maybe a locality code as well). 
 
 **WARNING**: _NEVER_ edit text files in word or something similar... it needs to be in a simple text editor such as text wrangler or BBedit. Also, always edit these files while seeing "invisible characters". 
 
