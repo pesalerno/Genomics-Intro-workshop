@@ -14,7 +14,7 @@ The following document follows a step-by-step protocol for processing genomic da
 /
 
 
-Before anything, make a directory for the project, in this case we are calling it Genomics-Bioinformatics-2015. One tip for unixing, always make names of files and directories have ZERO spaces in them.... ZERO. 
+Before anything, make a directory for the project, in this case we are calling it Genomics-Bioinformatics-2015. One tip for coding in unix, always make names of files and directories have ZERO spaces in them.... ZERO. 
 
 	mkdir Genomics-Bioinformatics-2015
 
@@ -26,7 +26,7 @@ Move into that directory
 
 
 
-Second, clone the git repository. Even though you can do this easily on the web and without an account, let's try doing it on terminal! Github is like the GenBank of coding.... let's give it a try, since it's really good practice to share code, to collaborate efficiently through version control software, and to start on this as early as possible!! (I certainly started too late).
+Second, clone my git repository for the course. Even though you can do this easily on the web and without an account, let's try doing it on terminal! Github is like the GenBank of coding.... let's give it a try, since it's really good practice to share code, to collaborate efficiently through version control software, and to start on this as early as possible!! (I certainly started too late).
 
 1.Create a git account online [here](https://github.com/join), choosing the free plan and open repositories.
 
@@ -81,11 +81,11 @@ Alternatively, if moving raw data files from your own computer to the cluster, t
 
 ###2. Adding the path for stacks in your bash profile 
 
-The server needs to know which paths (directories) to look for when you run a program. Thus, you need to set up paths for specific programs that are not directly within your own home directory in the cluster/server. This file is hidden, but you can see it (and whatever is in it)by typing:
+The server needs to know which paths (directories) to look for when you run a program. Thus, you need to set up paths for specific programs that are not directly within your own home directory in the cluster/server. This file is hidden, but you can see it (and whatever is in it) by typing:
 
 	cat .bash_profile
 
-This command simply prints the document, but you cannot alter it. The reason it's invisible is that it's protected, because your paths are important!! To edit this file, write:
+This command simply prints the document, but you cannot alter it. The reason it's invisible is so that it's a bit protected, because your paths are important!! To edit this file, write:
 
 	nano .bash_profile
 	
@@ -93,7 +93,7 @@ Now you can edit it. Add in a new line to your bash profile as follows:
 
 	PATH=$PATH:/opt/software/stacks-1.26/bin/
 
-Now it will know to search within that directory when you give it a given command. 
+Now it will know to search within that directory when you give it a given Stacks command. 
 
 
 ###3. Demultiplexing your dataset with Stacks.
@@ -113,18 +113,33 @@ You need to have the appropriate barcode files within the appropriate library fo
 		process_radtags -P -p ./PE-lib-1610/ -b barcodes-1610.txt -i gzfastq - \
 		o ./processed-1610/ -e sbfI -c -q -r -D
 	(example for library #1610 for *Xantusia*)
+
+Process radtags also cleans your data as it demultiplexes. 
  
 This command needs to be set up within the job scheduler (file of type ***.sh***), so set it up in the cluster (either set up the file on your computer and scp to cluster, or edit in cluster with ***nano*** text editor).
 
+To start a text file from scratch on the cluster (in general in unix) type:
+
+	touch name-of-file.txt
+
+then open the blank file to beign editing:
+
+
+	nano name-of-file.txt
+
+copy/paste the text for the job scheduler on the first line of the file, then copy/paste the commands for process_radtags. The file should be in the directory where your raw data folder is located (not within it) and then you can specify where your raw reads are located with the raw reads folder name. 
+
+
+ 
 #####3b. Merge libraries into single ***denovo*** directory
 
 Copy all renamed libraries for all individuals into the ***denovo*** directory; after checking that copying was performed successfully, then delete the files in the previous directory. 
 
 	cp *.fq /path/to/file   ##this will copy all files that end in .fq into the given directory 
-								(asterisk is called the wildcard)
+								(asterisk is a the wildcard)
 	cd /path/to/file
 	ls -ltr     ##do files look ok and of the right size? 
-	rm -r directoryname    ##remove the entire directory were sequences were originally 
+	rm -r directoryname    ##remove the entire directory were the demultiplexed sequences were originally 
 								demultiplexed (or you can also just delete the files that ended 
 								up being copied over only)
 	
@@ -132,10 +147,24 @@ Copy all renamed libraries for all individuals into the ***denovo*** directory; 
 ###4. Running denovo map permutations for parameter testing
 
 
-It's important to set up permutations to explore the data and how well the parameters are recovering "good" SNPs that have decent coverage within and among populations. Some parameters such as xx and xx are very sensitive to y and z, so bleh. 
+Running [denovo_map](http://catchenlab.life.illinois.edu/stacks/comp/denovo_map.php) is not a complicated process... but since different datasets can be very sensitive to parameter settings, we need to explore our dataset with different parameter combinations in order to decide what's the best approach (keeping good data, but not overfiltering). Some parameters such as xx and xx are very sensitive to y and z, so bleh. 
 
-####keep editing from here down
-Because we have decently high coverage, I'm varying the -m parameter (# reads required to form a stack) from 3-7, skipping even numbers (just to have a bigger range initially). Also, I'm not at all using -n 0 or 1, since they are biologically unrealistic given these datasets, and likely to eliminate and oversplit loci among individuals/populations with higher divergence. 
+The main parameters to vary are:
+
+m — specify a minimum number of identical, raw reads required to create a stack.
+
+M — specify the number of mismatches allowed between loci when processing a single individual (default 2).
+
+n — specify the number of mismatches allowed between loci when building the catalog (default 0).
+
+
+**Note 1**: The higher the coverage, the higher the m parameter can be. 
+
+**Note 2**: M should not be 1 (diploid data) but also should not be very high since it will begin to stack paralogs. 
+
+**Note 3**: n will depend on how divergent our individuals/populations are. IT should not be zero, since that would essentially create zero SNPs, but 1 also seems unrealistically low (only a single difference between individuals in any given locus), so in these kinds of datasets we should start permutations starting from 2.  If you use n 1 it is likely to oversplit loci among populations that are more divergent. 
+
+
 
 Permutations | -m | -M | -n | --max_locus_stacks 
 ------------ | ------------- | ------------ | ------------- | ------------ |
