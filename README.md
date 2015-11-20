@@ -6,7 +6,7 @@ The following document follows a step-by-step protocol for processing genomic da
 
 
 ###1. Getting started
-/ / / / / DISCLAIMER: I've never taken a bioinformatics course, it's all been self-taught and picked up in little pieces here and there. There are for sure better ways for doing all of these things, but my aim with this document is to be clear and helpful for people who are starting out just like I did, since I never really had an easy time starting due to being self-taught and not "a natural" at coding. /
+/ / / / / DISCLAIMER: I've never taken a bioinformatics course, it's all been self-taught and picked up in little pieces here and there. There are for sure better ways for doing all of these things, but my aim with this document is to be clear and helpful for people who are starting out just like I did, since I never really had an easy time starting due to being self-taught and not "a natural" at coding. However, the main lesson I've learned so far: ***learn how to google!!!*** everything you need to know is out there, it's a matter of knowing enough of the language to know how to search and what to search./
 /
 /
 /
@@ -98,7 +98,7 @@ Now it will know to search within that directory when you give it a given Stacks
 
 ###3. Demultiplexing your dataset with Stacks.
 
-NOTE: **The first step in any RADseq library is always demultiplexing. You are now picking out the barcode reads which are found at the beginning of your illumina read in order to separate them into the individual samples. You only need two things, the code that you will use, and a barcodes/samples file where you have BOTH barcodes (adapter and primer index) and the name you want you sample to be (otherwise the file name will be the barcode, which is zero informative for any human being). Naming the files in a smart way will save headaches down the line. Also, if you have repeated barcodes across different libraries, then not changing the names from thw default barcode names will mix your samples eventually. ** 
+NOTE: **The first step in any RADseq library is always demultiplexing. You are now picking out the barcode reads which are found at the beginning of your illumina read in order to separate them into the individual samples. You only need two things, the code that you will use, and a barcodes/samples file where you have BOTH barcodes (adapter and primer index) and the name you want you sample to be (otherwise the file name will be the barcode, which is zero informative for any human being). Naming the files in a smart way will save headaches down the line. Also, if you have repeated barcodes across different libraries, then not changing the names from the default barcode names will mix your samples eventually. ** 
 
 If you have separate libraries with overlapping barcodes, you need to demultiplex them separately since that is the only sample identifier you have (if you have combinatorial barcodes as in ddRAD, then as long as both adapter and PCR index don't overlap they can be demultiplexed together). 
 
@@ -108,10 +108,23 @@ De-multiplexing is performed using the program [process_radtags](http://creskola
 
 You need to have the appropriate barcode files within the appropriate library folder if demultiplexing libraries separately. 
 
-- The commands for process_radtags for the Paired-end libraries that we will use are:
+Figure out how your barcodes are set up within your sequence file, in order to determine how to set up the process_radtags code.
 
-		process_radtags -P -p ./PE-lib-1610/ -b barcodes-1610.txt -i gzfastq - \
-		o ./processed-1610/ -e sbfI -c -q -r -D
+To look into a gzipped file (for example, with head):
+
+	zcat file.name.fastq.gz | head ##may need to do gzcat instead
+
+Or you can also do less:
+
+	zless ##or gzless
+
+	
+
+The commands for process_radtags for the first single-end library that we will analyze are:
+
+	process_radtags  -b barcodes-a -o ./process_rads_B/  -q -D -w 0.15 -s 10 
+		--inline_index --renz_1 sphI --renz_2 mspI -f ./Stef_3_ATCACG_L008_R1_001.fastq.gz -i gzfastq 
+
 	(example for library #1610 for *Xantusia*)
 
 Process radtags also cleans your data as it demultiplexes. 
@@ -120,14 +133,20 @@ This command needs to be set up within the job scheduler (file of type ***.sh***
 
 To start a text file from scratch on the cluster (in general in unix) type:
 
-	touch name-of-file.txt
+	touch process-rads-A.sh
 
 then open the blank file to beign editing:
 
 
-	nano name-of-file.txt
+	nano process-rads-A.sh
 
 copy/paste the text for the job scheduler on the first line of the file, then copy/paste the commands for process_radtags. The file should be in the directory where your raw data folder is located (not within it) and then you can specify where your raw reads are located with the raw reads folder name. 
+
+To make the other process_radtags shell script for submitting the second demultiplexing job, copy the file into the same directory in order to save with a different name:
+
+	cp process-rads-A.sh process-rads-B.sh
+
+now edit the second .sh file to make sure it's running the appropriate data and the bleh bleh bleh. 
 
 
  
@@ -143,11 +162,42 @@ Copy all renamed libraries for all individuals into the ***denovo*** directory; 
 								demultiplexed (or you can also just delete the files that ended 
 								up being copied over only)
 	
+
+#####3c. Looking at our demultiplexed dataset
+
+Now that we've separated our dataset into our individuals, we can see how much data we have per individual. The fastest but not ideal way to look at this is simply by looking at the sizes of the .fq files that we now have for each individual. To get a list with file size information, type:
+
+	ls -l
+
+The files are huge!! and it's hard to read. So how can we look at them in a different unit (Megabyte? Terabyte?). We can find out by looking at the manual:
+
+	man ls
+
+(tip, scroll down to -h). The you'll se that we can use that flag:
+
+	ls -l -h
+
+and now we see mor easily the sizes of our files. But can we order them? Let's pipe our list command with sort, using -rn (reverse numeric) to order from larger to smaller file:
+
+	ls -l -h | sort -k 5 -rn
+
+However, if we want a more precise piece of information, we need read counts instead! 
+
+	echo -e 'SAMPLE_ID_FULL\tNUM_READS'
+		for file in *.fq
+	do
+    	echo -n $(basename $file .fq)$'\t'
+    	cat $file | grep '^@.*' | wc -l
+	done
+
+Here the syntax is cmore complicated, but in essence we are "grepping" (finding and grabbing) the first characters of each line of sequence, so in essence simply counting the lines of sequence within each file. 
 	
 ###4. Running denovo map permutations for parameter testing
 
 
-Running [denovo_map](http://catchenlab.life.illinois.edu/stacks/comp/denovo_map.php) is not a complicated process... but since different datasets can be very sensitive to parameter settings, we need to explore our dataset with different parameter combinations in order to decide what's the best approach (keeping good data, but not overfiltering). Some parameters such as xx and xx are very sensitive to y and z, so bleh. 
+Running [denovo_map](http://catchenlab.life.illinois.edu/stacks/comp/denovo_map.php) is not a complicated process... but since different datasets can be very sensitive to parameter settings, we need to explore our dataset with different parameter combinations in order to decide what's the best approach (keeping good data, but not overfiltering). 
+
+Denovo-map needs to be run with all your data, and even though it can be threaded for faster computation speed, the more individuals you have, the longer it takes, since the last step can't be threaded (all stacks need to be compared at once to build the catalog loci).
 
 The main parameters to vary are:
 
@@ -180,8 +230,52 @@ i | 3 | 2 | 5 | 3 |
 j | 3 | 2 | 2 | 4 |
 k | 3 | 2 | 2 | 5 |
 
+
+In order to make the input file for denovo_map, you need to generate a popmap, with all the correct file names form the stacks output, thus it's easier to just save a list of the .fq files into a text document to start that process. 
+
+	ls *.fq > sequences-list.txt
+
+The download that document on to your computer (from the shell window that is NOT on the cluster but on your own machine):
+
+	scp user@cluster.name:/path/to/file/sequences-list.txt . 
+
+the dot at the end of that command tells the address of where you want the file saved (in this case, it's just the current directory you're in). 
+
+You now open that file in a text editor, and through find/replace commands (essentially using **regular expressions** but with your text editor) you transform your list into the input file for denovo_map, which needs EVERY SINGLE input file listed on the .sh file and it's path. Each line should look like this:
+
+	-s ./IND-a-sequence.fq
+
+
+
+
+
 ----------------------------------------------
 ----------------------------------------------
+
+
+
+
+/
+
+/
+
+/
+
+/
+
+/
+
+/
+
+/
+
+/
+
+/
+
+
+
+
 
 
 ###Intermediate step: get a quick SNP matrix only with SR sequences for Chris' report
