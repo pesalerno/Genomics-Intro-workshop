@@ -26,7 +26,7 @@ Move into that directory
 
 
 
-Second, clone my git repository for the course. Even though you can do this easily on the web and without an account, let's try doing it on terminal! Github is like the GenBank of coding.... let's give it a try, since it's really good practice to share code, to collaborate efficiently through version control software, and to start on this as early as possible!! (I certainly started too late).
+Second, clone my git repository for the course, so that you'll have all the material you need. Even though you can do this easily on the web and without an account, let's try doing it on terminal! Github is like the GenBank of coding.... let's give it a try, since it's really good practice to share code, to collaborate efficiently through version control software, and to start on this as early as possible!! (I certainly started too late).
 
 1.Create a git account online [here](https://github.com/join), choosing the free plan and open repositories.
 
@@ -41,11 +41,15 @@ Second, clone my git repository for the course. Even though you can do this easi
 Now you should have all the materials for the course organized in the different directories. 
 
 #####Side bar: more on git 
-If you want to practice more with git, now that you have an account and the program installed, you can make your new repository (***do this online instead of locally to simplify things***) for your own files/changes that you have for this workshop, within terminal in the following way:
+If you want to practice more with git, now that you have an account and the program installed, you can make your own new repository (***do this online instead of locally to simplify things***) for your own files/changes that you have for this workshop, within terminal in the following way:
 
 	git init ##within the folder you want to work from 
 	git clone <web-address-of-new-directory>
----> make whatever changes, add files, folders, create new text documents, then if you type:
+---> make whatever changes, add files, folders, create new text documents. For example, you could create a new blank document with:
+
+	touch blank-example.txt
+
+then if you type:
 
 	git status
 	
@@ -64,6 +68,8 @@ and finally, once you've made your commit(s) to your change(s), then you can "pu
 and now if you refresh the page you should have the new changes already updated on your online repository!!
 
 
+Note: In order to make new directories in git, the directory will not be added unless it has a document in it (in essence, what you are adding is a new file within that directory, and the directory gets cloned into the repository), so when you are ready to add a file within a new directory, then add/commit/push the change and you should be set. 
+
 ###2. Downloading files into the raw data directory
 
 First, you need to know where the file is located in the web (i.e. directly from the sequencing facility), then you can copy/paste the address into the terminal window **on the cluster** (from the directory where you wish to copy to) and use the wget command for downloading as follows:
@@ -77,6 +83,8 @@ Alternatively, if moving raw data files from your own computer to the cluster, t
 
 	pwd ##on cluster, get the current working directory for the raw data
 	scp raw-data-file.gz person@clustername.institution/path/to/file/destination
+
+For this specific dataset, we have two "libraries" (two sequence files, one with each barcode). Let's demultiplex them separately for now, to learn a bit more by repeating and adding a couple of steps. To do this, create a de-multiplex directory for each one of the libraries, and also a raw-data directory within each so that steps are carried out cleanly and separately, for now...
 
 
 ###2. Adding the path for stacks in your bash profile 
@@ -118,6 +126,8 @@ Or you can also do less:
 
 	zless ##or gzless
 
+
+Now that you know how your sequence file looks like (it will vary from one facility to another), then you can enter the option for whether the barcode occurs in line with the sequence or not, and the other options as well (see the [process_radtags](http://catchenlab.life.illinois.edu/stacks/comp/process_radtags.php) manual for more info).
 	
 
 The commands for process_radtags for the first single-end library that we will analyze are:
@@ -125,7 +135,6 @@ The commands for process_radtags for the first single-end library that we will a
 	process_radtags  -b barcodes-a -o ./process_rads_B/  -q -D -w 0.15 -s 10 
 		--inline_index --renz_1 sphI --renz_2 mspI -f ./Stef_3_ATCACG_L008_R1_001.fastq.gz -i gzfastq 
 
-	(example for library #1610 for *Xantusia*)
 
 Process radtags also cleans your data as it demultiplexes. 
  
