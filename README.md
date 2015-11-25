@@ -5,7 +5,6 @@
 The following document follows a step-by-step protocol for processing genomic data, starting from downloading the dataset into your cluster space and finishing with some simple population analyses in R. It assumes little to no knowledge of unix, servers, and programming.
 
 
-###1. Getting started
 / / / / / DISCLAIMER: I've never taken a bioinformatics course, it's all been self-taught and picked up in little pieces here and there. There are for sure better ways for doing all of these things, but my aim with this document is to be clear and helpful for people who are starting out just like I did, since I never really had an easy time starting due to being self-taught and not "a natural" at coding. However, the main lesson I've learned so far: ***learn how to google!!!*** everything you need to know is out there, it's a matter of knowing enough of the language to know how to search and what to search./
 /
 /
@@ -13,6 +12,9 @@ The following document follows a step-by-step protocol for processing genomic da
 /
 /
 
+
+
+###1. Getting started
 
 Before anything, make a directory for the project, in this case we are calling it Genomics-Bioinformatics-2015. One tip for coding in unix, always make names of files and directories have ZERO spaces in them.... ZERO. 
 
@@ -25,8 +27,11 @@ Move into that directory
 	cd Genomics-Bioinformatics-2015  ###try the tab completion trick for this command
 
 
+#####1.2. Git-ing started (yep, I'm hilarious)
 
-Second, clone my git repository for the course, so that you'll have all the material you need. Even though you can do this easily on the web and without an account, let's try doing it on terminal! Github is like the GenBank of coding.... let's give it a try, since it's really good practice to share code, to collaborate efficiently through version control software, and to start on this as early as possible!! (I certainly started too late).
+Git is an excellent free online resource that acts like a repository for yourself and for sharing with collaborators. You can pay and make private repositories, but the whole idea is open source coding and sharing. Github is like the GenBank of coding.... let's give it a try, since it's really good practice to share code, to collaborate efficiently through version control software, and to start on this as early as possible!! (I certainly started too late).
+
+Start by cloning my git repository for the course, so that you'll have all the material you need. Even though you can do this easily on the web and without an account, let's try doing it on terminal! 
 
 1.Create a git account online [here](https://github.com/join), choosing the free plan and open repositories.
 
@@ -70,25 +75,89 @@ and now if you refresh the page you should have the new changes already updated 
 
 Note: In order to make new directories in git, the directory will not be added unless it has a document in it (in essence, what you are adding is a new file within that directory, and the directory gets cloned into the repository), so when you are ready to add a file within a new directory, then add/commit/push the change and you should be set. 
 
-###2. Downloading files into the raw data directory
 
-First, you need to know where the file is located in the web (i.e. directly from the sequencing facility), then you can copy/paste the address into the terminal window **on the cluster** (from the directory where you wish to copy to) and use the wget command for downloading as follows:
+#####1.3. Downloading files into the raw data directory
+
+First, you need to know where your data files are located in the web (i.e. directly from the sequencing facility), then you can copy/paste the address into the terminal window **on the cluster** (from the directory where you wish to copy to) and use the wget command for downloading as follows:
 
 	mkdir raw-data ##make new directory for your data
 	cd raw-data
 	wget <<web-address>>
-	ls ##after downloading is done, do you see all the files you expected to see?
+
 
 Alternatively, if moving raw data files from your own computer to the cluster, then you simply secure copy the file, which prompts for a password:
 
 	pwd ##on cluster, get the current working directory for the raw data
-	scp raw-data-file.gz person@clustername.institution/path/to/file/destination
+	scp raw-data-file.gz person@clustername.institution:/path/to/file/destination
 
-For this specific dataset, we have two "libraries" (two sequence files, one with each barcode). Let's demultiplex them separately for now, to learn a bit more by repeating and adding a couple of steps. To do this, create a de-multiplex directory for each one of the libraries, and also a raw-data directory within each so that steps are carried out cleanly and separately, for now...
+For this specific dataset, we have two "libraries" (four sequence files, one with each barcode), and they are located in my directory under raw-data:
+
+	/lustre/home/ciencias/biologia/pregrado/s.herrera706/Pati/raw-data
+
+So, from your own home directory, make a raw-data file and copy all the raw data files from my directory into yours:
+
+	mkdir raw-data
+	cp /lustre/home/ciencias/biologia/pregrado/s.herrera706/Pati/raw-data/Stef* .
+	
+The DOT at the end is crucial... you're telling the shell **where** you want that file copied to, which in this case is your current directory. Notice that I added an asterisk, which is the wildcard. This will copy ALL files within that directory that start with ***Stef***. Alternatively, you could copy all files of fastq.gz format as such:
+
+	cp /lustre/home/ciencias/biologia/pregrado/s.herrera706/Pati/raw-data/*fastq.gz .
 
 
-###2. Adding the path for stacks in your bash profile 
 
+#####1.4. Let's start messing with the raw data.
+
+The example dataset we are using is made of only fifty individuals, multiplexed in a single Illumina lane, obtaining 150bp Paired-end reads. In reality, I have a single lane of another set of 16 individuals, which I've used to generate a reference genome. But, for now, we will keep it simple and only use those two pools of data. 
+
+
+The names of the raw data files are:
+
+	Stef_4b_CGATGT_L008_R1_001.fastq.gz
+	Stef_4b_CGATGT_L008_R2_001.fastq.gz
+	Stef_3_ATCACG_L008_R2_001.fastq.gz
+	Stef_3_ATCACG_L008_R1_001.fastq.gz
+
+Notice we have two files for each pool, which correspond to each read of our paired-end Illumina data (R1 and R2). The files are formatted as fastq, which is the starndard for most sequence files, but the termination is gz, which is a type of file compression (g-zipped). The best way to transfer files and store them is zipped, but sometimes we want to uncompress them, for example to look into the files for some reason... in this case, to uncompress you would simply type:
+
+	gunzip name-of-file.gz
+
+And it expands file to original format. Let's do that to look into one of the files.... but it may take a bit...
+
+Now let's look into the file... normally, for a text file we would do something like
+
+	cat name-of-file.fastq
+
+which prints to screen the entire file in a non-editable format, which is awesome for looking at many text files... HOWEVER.... if you did this with this file.... well, it has millions of lines corresponding to millions of reads!!! (if you did, you can now "quit" the cat command by typing Control C).
+
+A better way of loking into these gigantic files is, for example, head or tail, to look at the beginning and end of files, respectively:
+
+	head name-of-file.fastq 
+	
+The default is only ten lines, so if we want to see more, we can type:
+
+	head name-of-file.fastq -n 25
+
+Now we can have a look at the file format. Each new sequence begins with @, but the first line of the sequence is some standard Illumina information, which you can find [here](http://support.illumina.com/help/SequencingAnalysisWorkflow/Content/Vault/Informatics/Sequencing_Analysis/CASAVA/swSEQ_mCA_FASTQFiles.htm).
+
+If you do the same but with the command tail, you will see the exact same format until the end of file... just lines and lines of sequence. Since we now know that each sequence begins with @, if we want to find out how many total sequences we have, we can simply count those characters.... right? Let's try it:
+
+	grep -c '@D3' Stef_3_ATCACG_L008_R1_001.fastq
+
+This will find and count the number of lines that start with the argument '@D3'. It will take a few seconds.... How many do we have?
+
+Awesome!! now we can get started with the real stuff.... analyzing/processing our data with STACKS! 
+
+
+
+
+###2. Demultiplexing your dataset with Stacks.
+
+NOTE: **The first step in any RADseq library is always demultiplexing. You are now picking out the barcode reads which are found at the beginning of your illumina read in order to separate them into the individual samples. You only need two things, the code that you will use, and a barcodes/samples file where you have BOTH barcodes (adapter and primer index) and the name you want you sample to be (otherwise the file name will be the barcode, which is zero informative for any human being). Naming the files in a smart way will save headaches down the line. Also, if you have repeated barcodes across different libraries, then not changing the names from the default barcode names will mix your samples eventually. ** 
+
+#####2.1. Adding the path for stacks in your bash profile 
+
+
+##FINISH THIS SECTION
 The server needs to know which paths (directories) to look for when you run a program. Thus, you need to set up paths for specific programs that are not directly within your own home directory in the cluster/server. This file is hidden, but you can see it (and whatever is in it) by typing:
 
 	cat .bash_profile
@@ -103,16 +172,53 @@ Now you can edit it. Add in a new line to your bash profile as follows:
 
 Now it will know to search within that directory when you give it a given Stacks command. 
 
+#####2.2. Setting up the barcodes files
 
-###3. Demultiplexing your dataset with Stacks.
+De-multiplexing is performed using the program [process_radtags](http://creskolab.uoregon.edu/stacks/comp/process_radtags.php) individually for each library within its directory (you can do it all at once, if barcodes are not the same, but let's do it separately for repetition and practice).
 
-NOTE: **The first step in any RADseq library is always demultiplexing. You are now picking out the barcode reads which are found at the beginning of your illumina read in order to separate them into the individual samples. You only need two things, the code that you will use, and a barcodes/samples file where you have BOTH barcodes (adapter and primer index) and the name you want you sample to be (otherwise the file name will be the barcode, which is zero informative for any human being). Naming the files in a smart way will save headaches down the line. Also, if you have repeated barcodes across different libraries, then not changing the names from the default barcode names will mix your samples eventually. ** 
+Other than the raw data, we need only a single input file for this step, the barcodes file. This file has all the info to pick out the combinatorial barcodes from your raw sequence reads, and it will split them up by sample name, according to your file. I have made a [single](https://github.com/pesalerno/Genomics-Intro-workshop/tree/master/1-demultiplexing) one of these files, for you to build the other. 
 
-If you have separate libraries with overlapping barcodes, you need to demultiplex them separately since that is the only sample identifier you have (if you have combinatorial barcodes as in ddRAD, then as long as both adapter and PCR index don't overlap they can be demultiplexed together). 
+The barcodes file is a simple text-delimited file with first column being adapter, second column being primer index, and third being the final file name you want (ideally an individual sample code, and maybe a locality code as well, whatever is informative for you later down the pipeline). In this case, we have ***Locality_sampleID*** format for names (we only have three localities for this project). 
 
-De-multiplexing is performed using the program [process_radtags](http://creskolab.uoregon.edu/stacks/comp/process_radtags.php) individually for each library within its directory, and renamed with sample names within Stacks using the appropriate barcodes/names text files, found [here](https://github.com/pesalerno/Genomics-Intro-workshop/tree/master/1-demultiplexing). The barcodes file is a simple text-delimited file with first column being adapter, second column being primer index, and third being the final file name you want (ideally an individual sample code, and maybe a locality code as well). 
+Now, build the same input file but for library ***Stef_4***. The names of the sequences are these:
 
-**WARNING**: _NEVER_ edit text files in word or something similar... it needs to be in a simple text editor such as text wrangler or BBedit. Also, always edit these files while seeing "invisible characters". 
+	Er_413
+	Er_414
+	Er_416
+	Er_418
+	Er_419
+	Er_420
+	Er_422
+	Er_423
+	Er_424
+	Er_425
+	Er_426
+	Er_427
+	Er_428
+	Er_429
+	Er_431
+	Er_432
+	Er_433
+	Er_434
+	Er_435
+	Er_436
+	Er_467
+	Er_468
+	Er_469
+	Er_470
+	TNHC05833
+
+
+And it has the exact same adapters as the first library, but with a different Index primer (can you figure out which one it is??). 
+
+**WARNING**: _NEVER_ edit text files in word/excel or something similar... it needs to be in a simple text editor such as text wrangler or BBedit. Also, always edit these files while seeing "invisible characters". 
+
+#####2.3. De-multiplexing and commands
+
+Let's demultiplex these two libraries separately for now, to learn a bit more by repeating and adding a couple of steps. To do this, create a de-multiplex directory for each one of the libraries, and also a raw-data directory within each so that steps are carried out cleanly and separately, for now...
+
+
+
 
 You need to have the appropriate barcode files within the appropriate library folder if demultiplexing libraries separately. 
 
@@ -132,8 +238,8 @@ Now that you know how your sequence file looks like (it will vary from one facil
 
 The commands for process_radtags for the first single-end library that we will analyze are:
 
-	process_radtags  -b barcodes-a -o ./process_rads_B/  -q -D -w 0.15 -s 10 
-		--inline_index --renz_1 sphI --renz_2 mspI -f ./Stef_3_ATCACG_L008_R1_001.fastq.gz -i gzfastq 
+	process_radtags -p ./raw_data_1/ -b adapters_16 -o ./process_rads_1/  -c -q -r -D --inline_index --renz_1 sphI --renz_2 mspI -i gzfastq 
+
 
 
 Process radtags also cleans your data as it demultiplexes. 
