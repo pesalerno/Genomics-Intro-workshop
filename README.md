@@ -147,6 +147,14 @@ This will find and count the number of lines that start with the argument '@D3'.
 
 Awesome!! now we can get started with the real stuff.... analyzing/processing our data with STACKS! 
 
+**NOTE**: To look into a gzipped file (for example, with head):
+
+	zcat file.name.fastq.gz | head ##may need to do gzcat instead
+
+Or you can also do less:
+
+	zless ##or gzless
+
 
 
 
@@ -178,7 +186,11 @@ De-multiplexing is performed using the program [process_radtags](http://creskola
 
 Other than the raw data, we need only a single input file for this step, the barcodes file. This file has all the info to pick out the combinatorial barcodes from your raw sequence reads, and it will split them up by sample name, according to your file. I have made a [single](https://github.com/pesalerno/Genomics-Intro-workshop/tree/master/1-demultiplexing) one of these files, for you to build the other. 
 
-The barcodes file is a simple text-delimited file with first column being adapter, second column being primer index, and third being the final file name you want (ideally an individual sample code, and maybe a locality code as well, whatever is informative for you later down the pipeline). In this case, we have ***Locality_sampleID*** format for names (we only have three localities for this project). 
+You can secure copy this file that is now on your git directory on your computer into your directory in the cluster:
+
+	scp barcodes-Stef-3.txt username@clustername:path/to/directory
+
+The barcodes file is a simple text-delimited file with first column being the unique adapter, second column being the primer index, and third being the final file name you want (ideally an individual sample code, and maybe a locality code as well, whatever is informative for you later down the pipeline). In this case, we have ***Locality_sampleID*** format for names (we only have three localities for this project). 
 
 Now, build the same input file but for library ***Stef_4***. The names of the sequences are these:
 
@@ -217,26 +229,15 @@ And it has the exact same adapters as the first library, but with a different In
 
 Let's demultiplex these two libraries separately for now, to learn a bit more by repeating and adding a couple of steps. To do this, create a de-multiplex directory for each one of the libraries, and also a raw-data directory within each so that steps are carried out cleanly and separately, for now...
 
-
-
-
 You need to have the appropriate barcode files within the appropriate library folder if demultiplexing libraries separately. 
 
-Figure out how your barcodes are set up within your sequence file, in order to determine how to set up the process_radtags code.
-
-To look into a gzipped file (for example, with head):
-
-	zcat file.name.fastq.gz | head ##may need to do gzcat instead
-
-Or you can also do less:
-
-	zless ##or gzless
+Figure out how your barcodes are set up within your sequence file, in order to determine how to set up the process_radtags code (doing any of the commands we did earlier to look into the files).
 
 
 Now that you know how your sequence file looks like (it will vary from one facility to another), then you can enter the option for whether the barcode occurs in line with the sequence or not, and the other options as well (see the [process_radtags](http://catchenlab.life.illinois.edu/stacks/comp/process_radtags.php) manual for more info).
 	
 
-The commands for process_radtags for the first single-end library that we will analyze are:
+The commands for process_radtags for the first paired-end library that we will analyze are:
 
 	process_radtags -p ./raw_data_1/ -b adapters_16 -o ./process_rads_1/  -c -q -r -D --inline_index --renz_1 sphI --renz_2 mspI -i gzfastq 
 
