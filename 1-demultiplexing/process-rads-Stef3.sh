@@ -1,11 +1,3 @@
-#!/bin/bash
-#PBS -q q8 1w
-#PBS -M patriciasalerno@gmail.com
-#PBS -m abe
-#PBS -N test-e2
-
-
-
 module load stacks/1.35
 
 mkdir ./Pati/raw-data/Lib-1/process_rads_1e2
