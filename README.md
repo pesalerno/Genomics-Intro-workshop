@@ -117,7 +117,7 @@ The names of the raw data files are:
 	Stef_3_ATCACG_L008_R2_001.fastq.gz
 	Stef_3_ATCACG_L008_R1_001.fastq.gz
 
-Notice we have two files for each pool, which correspond to each read of our paired-end Illumina data (R1 and R2). The files are formatted as fastq, which is the starndard for most sequence files, but the termination is gz, which is a type of file compression (g-zipped). The best way to transfer files and store them is zipped, but sometimes we want to uncompress them, for example to look into the files for some reason... in this case, to uncompress you would simply type:
+Notice we have two files for each pool, which correspond to each read of our paired-end Illumina data (R1 and R2). The files are formatted as fastq, which is the standard for most sequence files, but the termination is gz, which is a type of file compression (g-zipped). The best way to transfer files and store them is zipped, but sometimes we want to uncompress them, for example to look into the files for some reason... in this case, to uncompress you would simply type:
 
 	gunzip name-of-file.gz
 
@@ -147,11 +147,7 @@ This will find and count the number of lines that start with the argument '@D3'.
 
 Awesome!! now we can get started with the real stuff.... analyzing/processing our data with STACKS! 
 
-**NOTE**: To look into a gzipped file (for example, with head):
-
-	zcat file.name.fastq.gz | head ##may need to do gzcat instead
-
-Or you can also do less:
+**NOTE**: You can also look into a gzipped file with slightly modified commands/programs, for example:
 
 	zless ##or gzless
 
@@ -162,33 +158,18 @@ Or you can also do less:
 
 NOTE: **The first step in any RADseq library is always demultiplexing. You are now picking out the barcode reads which are found at the beginning of your illumina read in order to separate them into the individual samples. You only need two things, the code that you will use, and a barcodes/samples file where you have BOTH barcodes (adapter and primer index) and the name you want you sample to be (otherwise the file name will be the barcode, which is zero informative for any human being). Naming the files in a smart way will save headaches down the line. Also, if you have repeated barcodes across different libraries, then not changing the names from the default barcode names will mix your samples eventually. ** 
 
-#####2.1. Adding the path for stacks in your bash profile 
 
-
-##FINISH THIS SECTION
-The server needs to know which paths (directories) to look for when you run a program. Thus, you need to set up paths for specific programs that are not directly within your own home directory in the cluster/server. This file is hidden, but you can see it (and whatever is in it) by typing:
-
-	cat .bash_profile
-
-This command simply prints the document, but you cannot alter it. The reason it's invisible is so that it's a bit protected, because your paths are important!! To edit this file, write:
-
-	nano .bash_profile
-	
-Now you can edit it. Add in a new line to your bash profile as follows:
-
-	PATH=$PATH:/opt/software/stacks-1.26/bin/
-
-Now it will know to search within that directory when you give it a given Stacks command. 
-
-#####2.2. Setting up the barcodes files
+#####2.1. Setting up the barcodes files
 
 De-multiplexing is performed using the program [process_radtags](http://creskolab.uoregon.edu/stacks/comp/process_radtags.php) individually for each library within its directory (you can do it all at once, if barcodes are not the same, but let's do it separately for repetition and practice).
 
-Other than the raw data, we need only a single input file for this step, the barcodes file. This file has all the info to pick out the combinatorial barcodes from your raw sequence reads, and it will split them up by sample name, according to your file. I have made a [single](https://github.com/pesalerno/Genomics-Intro-workshop/tree/master/1-demultiplexing) one of these files, for you to build the other. 
+Other than the raw data, we need only a single input file for this step, the barcodes file. This file has all the info to pick out the combinatorial barcodes from your raw sequence reads, and it will split them up by sample name, according to your file. I have written up a [single](https://github.com/pesalerno/Genomics-Intro-workshop/tree/master/1-demultiplexing) barcodes file, so you need to build the other. 
 
 You can secure copy this file that is now on your git directory on your computer into your directory in the cluster:
 
 	scp barcodes-Stef-3.txt username@clustername:path/to/directory
+
+
 
 The barcodes file is a simple text-delimited file with first column being the unique adapter, second column being the primer index, and third being the final file name you want (ideally an individual sample code, and maybe a locality code as well, whatever is informative for you later down the pipeline). In this case, we have ***Locality_sampleID*** format for names (we only have three localities for this project). 
 
@@ -227,9 +208,9 @@ And it has the exact same adapters as the first library, but with a different In
 
 #####2.3. De-multiplexing and commands
 
-Let's demultiplex these two libraries separately for now, to learn a bit more by repeating and adding a couple of steps. To do this, create a de-multiplex directory for each one of the libraries, and also a raw-data directory within each so that steps are carried out cleanly and separately, for now...
+Let's demultiplex these two libraries separately for now, to learn a bit more by repeating and adding a couple of steps. To do this, create a de-multiplex directory for each one of the libraries, and also a raw directory to put the raw data in (in each of the library directories) so that steps are carried out cleanly and separately, for now...
 
-You need to have the appropriate barcode files within the appropriate library folder if demultiplexing libraries separately. 
+You need to have the appropriate barcode file within the appropriate library folders if demultiplexing libraries separately. 
 
 Figure out how your barcodes are set up within your sequence file, in order to determine how to set up the process_radtags code (doing any of the commands we did earlier to look into the files).
 
@@ -237,36 +218,41 @@ Figure out how your barcodes are set up within your sequence file, in order to d
 Now that you know how your sequence file looks like (it will vary from one facility to another), then you can enter the option for whether the barcode occurs in line with the sequence or not, and the other options as well (see the [process_radtags](http://catchenlab.life.illinois.edu/stacks/comp/process_radtags.php) manual for more info).
 	
 
-The commands for process_radtags for the first paired-end library that we will analyze are:
+The commands for process_radtags for the first paired-end library that we will analyze can be found [here](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/1-demultiplexing/process-rads-Stef3.sh), but you need to edit the path to your working directory and to your raw data. 
 
-	process_radtags -p ./raw_data_1/ -b adapters_16 -o ./process_rads_1/  -c -q -r -D --inline_index --renz_1 sphI --renz_2 mspI -i gzfastq 
+The commands for the job scheduler specific for the Uniandes Cluster can be found [here](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/1-demultiplexing/cluster-header.txt.sh). You need to modify the cluster header with your personal information, and the name you want to give your job. Try to mofidy this file in the shell using the program nano, as such:
+
+	nano cluster-header.txt
+
+Now you can edit the file, and follow the instructions on the bottom of the shell window to save and exit the file. 
 
 
+We can set up our job file in one of two ways... you can either copy/paste the job scheduler header (specific to each cluster) and after that the Stacks commands below (using the program nano on the cluster), or we can merge the two files back to back using cat. To merge two files back to back using cat, you only need to do:
 
-Process radtags also cleans your data as it demultiplexes. 
- 
-This command needs to be set up within the job scheduler (file of type ***.sh***), so set it up in the cluster (either set up the file on your computer and scp to cluster, or edit in cluster with ***nano*** text editor).
+	cat cluster-header.txt process-rads-Stef3.sh > process-rads-Stef3-b.sh 
 
-To start a text file from scratch on the cluster (in general in unix) type:
 
-	touch process-rads-A.sh
+To start the text file from scratch on the cluster (in general in unix) so that you can just copy/paste the job scheduler and the Stacks commands, type:
+
+	touch process-rads-Stef3.sh
 
 then open the blank file to beign editing:
 
 
-	nano process-rads-A.sh
+	nano process-rads-Stef3.sh
 
 copy/paste the text for the job scheduler on the first line of the file, then copy/paste the commands for process_radtags. The file should be in the directory where your raw data folder is located (not within it) and then you can specify where your raw reads are located with the raw reads folder name. 
 
+
 To make the other process_radtags shell script for submitting the second demultiplexing job, copy the file into the same directory in order to save with a different name:
 
-	cp process-rads-A.sh process-rads-B.sh
+	cp process-rads-Stef3.sh ./Stef4/process-rads-Stef4.sh
 
-now edit the second .sh file to make sure it's running the appropriate data and the bleh bleh bleh. 
+now edit the second .sh file to make sure it's running the appropriate data and within th appropriate directories. 
 
 
  
-#####3b. Merge libraries into single ***denovo*** directory
+#####3b. Merge de-multiplexed libraries into single ***denovo*** directory
 
 Copy all renamed libraries for all individuals into the ***denovo*** directory; after checking that copying was performed successfully, then delete the files in the previous directory. 
 
