@@ -361,9 +361,9 @@ Then, add a "line continues" to the end of each line (so that the shell knows to
 
 And finally delete the last \ from the last line of sequence so that the program knows to STOP reading! (otherwise it will wait until you give it the last command...). The final file should look like [this](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/2-denovo-map/sequences-list.txt). 
 
-NOTE: specifically for the uniandes cluster, you need to specific the COMPLETE PATH every time you do anything (most clusters will find the sequence within the directory you're running the script from, simplifying paths). So, do a final search/replace to add entire path to file before each sequence. 
+***NOTE:*** specifically for the uniandes cluster, you need to specific the COMPLETE PATH every time you do anything (most clusters will find the sequence within the directory you're running the script from, simplifying paths). So, do a final search/replace to add entire path to file before each sequence. 
 
-Now we can add the denovo_map.pl specifications before the sequences, and the cluster header, and we will be set! 
+
 
 #####4.3. Setting up the denovo-map specifications to run a first time.
 
@@ -371,12 +371,13 @@ We can now add the specifications to denovo_map.pl BEFORE the list of sequences,
 
 	module load stacks/1.35
 
-	mkdir ./Pati/Analyses/denovo-map/denovo-test-1/
+	mkdir ./path/to/denovo-map/denovo-test-1/
 
-	denovo_map.pl -T 8 -m 2 -M 3 -n 2 -S -b 2 -o ./Pati/Analyses/denovo-map/denovo-test-1/ \
-	-s ./Pati/Analyses/denovo-map/Ab_372.1.fq \
-	-s ./Pati/Analyses/denovo-map/Ab_372.2.fq \
-Etc.... (as in, followed by all your other sequences). 
+	denovo_map.pl -T 8 -m 2 -M 3 -n 2 -S -b 2 -o ./path/to/denovo-map/denovo-test-1/ \
+	-s ./path/to/denovo-map/Ab_372.1.fq \
+	-s ./path/to/denovo-map/Ab_372.2.fq \
+Etc.... (as in, followed by all your other sequences). So, the final file should look like [this](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/2-denovo-map/denovo-map-test-2.txt), though you need to modify your personal information and path. 
+
 
 #####4.2. Setting up denovo-map permutations for parameter testing
 
@@ -416,24 +417,6 @@ j | 3 | 2 | 2 | 4 |
 k | 3 | 2 | 2 | 5 |
 
 
-In order to make the input file for denovo_map, you need to generate a popmap, with all the correct file names form the stacks output, thus it's easier to just save a list of the .fq files into a text document to start that process. 
-
-	ls *.fq > sequences-list.txt
-
-The download that document on to your computer (from the shell window that is NOT on the cluster but on your own machine):
-
-	scp user@cluster.name:/path/to/file/sequences-list.txt . 
-
-the dot at the end of that command tells the address of where you want the file saved (in this case, it's just the current directory you're in). 
-
-You now open that file in a text editor, and through find/replace commands (essentially using **regular expressions** but with your text editor) you transform your list into the input file for denovo_map, which needs EVERY SINGLE input file listed on the .sh file and it's path. Each line should look like this:
-
-	-s ./IND-a-sequence.fq
-
-
-
-
-
 ----------------------------------------------
 ----------------------------------------------
 
@@ -459,48 +442,6 @@ You now open that file in a text editor, and through find/replace commands (esse
 /
 
 
-
-
-
-
-###Intermediate step: get a quick SNP matrix only with SR sequences for Chris' report
-
-######1. check to see which files are repeats in different libraries, or else when moving them to do denovo_map they will be rewritten/lost.
-
-Libraries #1612 and #1835 are essentially duplicates, with few exceptions. Library #1834 is mostly unique with a few that are repeats from #1612. So for ***Xantusia***, I'm renaming all sequence files and adding a -1.fq.gz to library #1 (1612), -2.fq.gz to library 2 (1834), -3.fq.gz to library 3 (1835), -4.fq.gz to library 4 (1994), and -5.fq.gz to library 5 (1995). Renaming all files at once using the following code:
-
-	rename .fq.gz -1.fq.gz *.fq.gz
-	
-	
-
-
-------------------------------------
-
-
-######2. Merge fasta files for library duplicates
-
-After being renamed, move all files back to the SR-denovo-prelim folder and there I merge the fasta files. I merge following these guidelines (from this [source](http://www.researchgate.net/post/How_do_I_merge_several_multisequence-fasta_files_to_create_one_tree_for_subsequent_Unifrac_analysis)):
-
-*To merge several files use the SHELL, go to your folder where the files are and use the cat command. E.g. to merge seqfile001.fasta, seqfile002.fasta and seqfile003.fasta type*
-
-	cat seqfile001.fasta seqfile002.fasta seqfile003.fasta > seqcombined.fasta
-
-
-*or if you have more files use*
-
-	cat *.fasta > seqcombined.fasta
-
-
-The duplicated files are sorted into a separate folder before merging, just to keep track of what's being merged. Then the post-merged files are sorted back into the general directory containing all sequences. Total number of files before merging duplicates from different ***Xantusia*** library preps was 187, and after merging duplicate individuals we now have 142 files for denovo_map input. Total number of files before merging duplicates from different ***Pseudacris*** library preps was 180, and after merging duplicate individuals we now have 132 files for denovo_map input. 
-
-------------------------------------
-
-
-######3. Running denovo_map for SR reads
-
-The code used for running denovo_map for only the SR reads was:
-
-	denovo_map.pl -m 3 -M 2 -n 1 -T 16 -b 1 -t -S -o ./denovo-1/ \
 
 
 
@@ -535,108 +476,6 @@ Based on number of SNPs, it's already suggesting that ***Xantusia*** has a much 
 
 -> When doing -p7 -r 0.7 for ***Xantusia*** you get ZERO SNPs.... which means that there is either a huge amount of missing data, or that the mainland population is too divergent for this constraint.... 
 
-
-
-
-----------------------------------------------
-----------------------------------------------
-----------------------------------------------
-----------------------------------------------
-
-
-
-#
-
-#
-
-##Step 2: create reference genome with PE reads
-
-######2.1. Run denovo_map program for paired-end reads
-
-Run in Stacks the script [denovo_map](http://creskolab.uoregon.edu/stacks/comp/denovo_map.php) with libraries with higher depth of coverage and paired-end reads for creating the reference genome. I'm trying to be highly conservative about the flag parameters. 
-
-	> denovo_map.pl -m 3 -M 1 -n 0 -T 16 -b 1 -t -S -o ./denovo-1/ \
-
-
-From Hohenlohe et al. 2013: *"We grouped the forward and reverse reads from all individuals in these populations into a separate file for each RAD locus, using the STACKS program sort_read_pairs.pl"*
-
-More from Hohenlohe et al. 2013: *"We created a catalog of RAD tag loci using cstacks and matched indi- viduals against the catalog using sstacks. We populated and indexed a MYSQL database of loci using load_ radtags.pl and index_radtags.pl and then exported the data using export_sql.pl. Finally, we grouped the for- ward and reverse reads from each individual corre- sponding to each RAD locus using sort_read_pairs.pl."*
-
-More from Hohenlohe et al. 2013: *"We assembled the reads in each file separately to produce a set of RAD contigs (Fig. 2b), using both VELVET (Zerbino & Bir- ney 2008) and CAP3 (Huang & Madan 1999) assembly software."*
-
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-#
-
-
-
-
----> May want to run [exec_velvet.pl](http://catchenlab.life.illinois.edu/stacks/comp/exec_velvet.php) to generate collated fasta file for reference genome.
-
-Use the output consensus sequence file from denovo_map (*"catalogs.tags.tsv"*) and transform to fasta format for input into [bwa](http://bio-bwa.sourceforge.net/bwa.shtml), using Kelly's R script (need to modify once I run it):
-
-	
-	# Import the data and check the structure
-	tags<-read.table('batch_1.catalog.tags.tsv', header=FALSE)
-	# all the sequences are in $V9
-
-	unique(tags$V2) # sample ID is meaningless here
-	length(unique(tags$V3)) #417153 -- each row has a unique locus ID
-
-	# verify that all of the tags are consensus:
-	consensus.tags<-subset(tags, V6=='consensus')
-	length(consensus.tags[,1]) #417153
-	length(tags[,1]) #417153
-
-	# each sequence needs a fasta header to uniquely identify it
-	fa.id<-paste('>', tags$V3, '_pseudoreference_pe_concatenated_without_rev_complement', sep='')
-
-	fa<-cbind(fa.id, as.character(tags$V9))
-	write.table(fa, file='D_variabilis_denovo_psuedoreference.fa', quote=FALSE, sep='\n', row.names=FALSE,
-            col.names=FALSE)
- 
-
-######2.2. Index reference genome and align in bwa
-
-Create reference genome from fasta consensus sequences:
-
-	> bwa index paired-end.fasta
-
-Then align all of the de-multiplexed files (single-end 100bp reads) to reference genome:
-
-	> bwa mem -t 6 paired-end.fasta all-reads-demultiplexed.fq > align-allRADs.sam
-	
-Transform .sam file to .bam file for visualization in IGV:
-
-	> module load samtools
-	> samtools view -b -S -o 454-align.bam 454-align.sam
-	> samtools sort 454-align.bam 454-align.sorted
-	> samtools index 454-align.sorted.bam
-
-Visualize in IGV
-
-Use either .sam or .bam alignment for input in ref_map.pl
-
-##Step 3: Map to new reference genome in Stacks
-
-Use ref_map.pl for mapping the raw read files to the reference genome we created using the in-depth paired-end reads plus the single-end reads of all individuals.
-
-	> ref_map.pl -o /path/for/output -n 2 -m 2 -T 12 -O popmap.txt -b 1 -S -s ./all-sequences-here\
 
 ##Step 4: Filter data with haplotype corrections in Stacks
 
