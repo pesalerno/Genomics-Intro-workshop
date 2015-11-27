@@ -361,8 +361,22 @@ Then, add a "line continues" to the end of each line (so that the shell knows to
 
 And finally delete the last \ from the last line of sequence so that the program knows to STOP reading! (otherwise it will wait until you give it the last command...). The final file should look like [this](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/2-denovo-map/sequences-list.txt). 
 
+NOTE: specifically for the uniandes cluster, you need to specific the COMPLETE PATH every time you do anything (most clusters will find the sequence within the directory you're running the script from, simplifying paths). So, do a final search/replace to add entire path to file before each sequence. 
+
 Now we can add the denovo_map.pl specifications before the sequences, and the cluster header, and we will be set! 
 
+#####4.3. Setting up the denovo-map specifications to run a first time.
+
+We can now add the specifications to denovo_map.pl BEFORE the list of sequences, and it should be like this:
+
+	module load stacks/1.35
+
+	mkdir ./Pati/Analyses/denovo-map/denovo-test-1/
+
+	denovo_map.pl -T 8 -m 2 -M 3 -n 2 -S -b 2 -o ./Pati/Analyses/denovo-map/denovo-test-1/ \
+	-s ./Pati/Analyses/denovo-map/Ab_372.1.fq \
+	-s ./Pati/Analyses/denovo-map/Ab_372.2.fq \
+Etc.... (as in, followed by all your other sequences). 
 
 #####4.2. Setting up denovo-map permutations for parameter testing
 
