@@ -250,22 +250,50 @@ To make the other process_radtags shell script for submitting the second demulti
 
 now edit the second .sh file to make sure it's running the appropriate data and within th appropriate directories. 
 
+#####2.4. Submit job on cluster
+
+To submit your job on the cluster (this will be specific to each cluster), all you have to do is write the submit command followed by the name of your file:
+
+	qsub name-of-job.sh
+
+To see if your job is running properly, type:
+
+	qstat user-name
+
+And you should see the information on the jobname, where the job is running, and the status of the job. To kill a job, you can type:
+
+	qdel jobName
+
+And the jobName is the one you see when you qstat the job you just submitted. 
+
+
+#####2.5. Look at your logfiles once your job is done
+If you set up your cluster header (job scheduler) script correctly, you should recieve an email when you submit the job, and another one when the job is done. When the job is done, you should cd into your job folder and do:
+
+	ls -l 
+You will see all the files that have been generated as output. We have the discarded files per each file, and the forward and reverse reads for all of them as well. Now look into your logfile, which should look almost exactly (if not identical) to [this](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/1-demultiplexing/process_radtags.log).
 
  
 #####3b. Merge de-multiplexed libraries into single ***denovo*** directory
 
-Copy all renamed libraries for all individuals into the ***denovo*** directory; after checking that copying was performed successfully, then delete the files in the previous directory. 
+Copy all renamed libraries for all individuals into a ***denovo-map*** directory; after checking that copying was performed successfully, then delete the files in the previous directory. 
 
-	cp *.fq /path/to/file   ##this will copy all files that end in .fq into the given directory 
-								(asterisk is a the wildcard)
+First clean your directory to facilitate copying the desired files to your denovo-map directory, from within your process-rads directory:
+
+	mkdir discards
+	mv *.rem.* discards ###this will move all files that contain '.rem.' into the discards directory (asterisk is the wildcard)
+	mv *gz.discards discards
+
+Now your directory only contains the logfile and the "kept" sequences for each individual. Now move your files to denovo-map:
+
+	cp *.fq.gz /path/to/denovo-map   
 	cd /path/to/file
-	ls -ltr     ##do files look ok and of the right size? 
-	rm -r directoryname    ##remove the entire directory were the demultiplexed sequences were originally 
-								demultiplexed (or you can also just delete the files that ended 
-								up being copied over only)
+	ls -ltr     ##do files look like they copied over fine?? 
+	rm /path/to/process-rads-directory/*.fq.gz    ##remove the files that ended up being copied over to the denovo-map)
 	
 
 #####3c. Looking at our demultiplexed dataset
+
 
 Now that we've separated our dataset into our individuals, we can see how much data we have per individual. The fastest but not ideal way to look at this is simply by looking at the sizes of the .fq files that we now have for each individual. To get a list with file size information, type:
 
@@ -275,27 +303,68 @@ The files are huge!! and it's hard to read. So how can we look at them in a diff
 
 	man ls
 
-(tip, scroll down to -h). The you'll se that we can use that flag:
+(tip, scroll down to -h with spacebar; exit with 'q'). The you'll se that we can use that flag:
 
-	ls -l -h
+	ls -lh
 
-and now we see mor easily the sizes of our files. But can we order them? Let's pipe our list command with sort, using -rn (reverse numeric) to order from larger to smaller file:
+and now we see more easily the sizes of our files. But can we order them? Let's pipe our list command with sort, using -rn (reverse numeric) to order from larger to smaller file:
 
-	ls -l -h | sort -k 5 -rn
+	ls -l | sort -k 5 -rn
 
-However, if we want a more precise piece of information, we need read counts instead! 
+Uh oh.... looks like we have FIVE individuals with VERY little data!!! [Oh no!](http://giphy.com/gifs/movie-crying-johnny-depp-hAt4kMHnaVeNO). Well, it happens. So, we know we're likely to not use those individuals for our denovo-map step. But before we completely move on, if we want a more precise piece of information, we need read counts instead! First, gunzip your files:
+
+	gunzip *.fq.gz
+
+Then, count your reads (which will take a cuouple of minutes and will print to your screen):
 
 	echo -e 'SAMPLE_ID_FULL\tNUM_READS'
-		for file in *.fq
+	for file in ~/path/to/denovo-map/*.fq
 	do
-    	echo -n $(basename $file .fq)$'\t'
-    	cat $file | grep '^@.*' | wc -l
+	echo -n $(basename $file .fq)$'\t'
+	cat $file | grep '^@.*' | wc -l
 	done
 
-Here the syntax is cmore complicated, but in essence we are "grepping" (finding and grabbing) the first characters of each line of sequence, so in essence simply counting the lines of sequence within each file. 
-	
-###4. Running denovo map permutations for parameter testing
+Here the syntax is more complicated, but in essence we are "grepping" (finding and grabbing) the first characters of each line of sequence for each file, and printing the numbers of lines with those characters that occur in each file... i.e., the number of reads for each individual.
 
+We can see that we have those five individuals that have ZERO reads, and a couple of more that have very few reads.... However, for now let's only eliminate the individuals that have zero reads, to do denovo-map without those. 
+
+	mkdir zero-reads
+	mv Ch_327* zero-reads	
+(and repeat that for all other four individuals). Check that you did this correctly by seeing there are no files with 0kb on your current directory and by ls -ls on the zero-reads directory to make sure all of them have zero reads. 
+
+
+FYI: if you see from the file names, one of our individuals is named VERY differently from the others... that's because that individual sequence is a stray from another project. We don't want to run denovo-map with this individual, because it will skew our results. so, DELETE those files from the denovo-map directory:
+
+	rm TNHC*
+
+***NOTE:*** deleting files on the shell is much more dangerous than how you normally do this on finder on your computer... it permanently deletes them!! no going back... so always be sure and be careful. 
+
+ OK, now we're ready to start mapping!!! 
+ 
+	
+###4. Running denovo map
+
+#####4.1. Setting up your input file
+You need to make a list (for example with ls -l) of all of your files because stacks needs as input the name of every single sequence in your dataset for running denovo_map.pl. In order to do this, we will copy/paste into a simple text editor all of your file names, and then run a chain of search/replace arguments to have this ready to input. 
+
+First, keep only a single column with your file names. Then, add -s ./ to the begining of each line:
+
+![find-replace-1](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/2-denovo-map/1-find-replace.png)
+
+Using a series of finds that have to do with the first characters on each line:
+
+![find-replace-2](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/2-denovo-map/2-find-replace.png)
+
+Then, add a "line continues" to the end of each line (so that the shell knows to continue reading all lines of sequence):
+
+![find-replace-3](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/2-denovo-map/3-find-replace.png)
+
+And finally delete the last \ from the last line of sequence so that the program knows to STOP reading! (otherwise it will wait until you give it the last command...). The final file should look like [this](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/2-denovo-map/sequences-list.txt). 
+
+Now we can add the denovo_map.pl specifications before the sequences, and the cluster header, and we will be set! 
+
+
+#####4.2. Setting up denovo-map permutations for parameter testing
 
 Running [denovo_map](http://catchenlab.life.illinois.edu/stacks/comp/denovo_map.php) is not a complicated process... but since different datasets can be very sensitive to parameter settings, we need to explore our dataset with different parameter combinations in order to decide what's the best approach (keeping good data, but not overfiltering). 
 
