@@ -2,12 +2,13 @@
 #Genomics bioinformatics intro workshop
 
 
-The following document follows a step-by-step protocol for processing genomic data, starting from downloading the dataset into your cluster space and finishing with some simple population analyses in R. It assumes little to no knowledge of unix, servers, and programming.
+The following document follows a step-by-step protocol for processing genomic data, starting from downloading/uploading the raw data into your cluster space, genotyping with Stacks, and finishing with some simple population analyses in R. It assumes little to no knowledge of unix, servers, and programming.
 
 
-/ / / / / DISCLAIMER: I've never taken a bioinformatics course, it's all been self-taught and picked up in little pieces here and there. There are for sure better ways for doing all of these things, but my aim with this document is to be clear and helpful for people who are starting out just like I did, since I never really had an easy time starting due to being self-taught and not "a natural" at coding. However, the main lesson I've learned so far: ***learn how to google!!!*** everything you need to know is out there, it's a matter of knowing enough of the language to know how to search and what to search./
-/
-/
+/ / / / / DISCLAIMER: I've never taken a bioinformatics course, it's all been self-taught and picked up in little pieces here and there. There are for sure better ways for doing all of these things, but my aim with this document is to be clear and helpful for people who are starting out just like I did, since I never really had an easy time starting due to being self-taught and not "a natural" at coding. However, the main lesson I've learned so far: ***learn how to google!!!*** everything you need to know is out there, it's a matter of knowing enough of the language to know how to search and what to search.
+
+
+Also, [this book](http://www.amazon.com/Practical-Computing-Biologists-Steven-Haddock/dp/0878933913) is one of the best resources you will find out there for starting out and learning the different languages that are most relevant for biologists. 
 /
 /
 /
@@ -46,7 +47,7 @@ Start by cloning my git repository for the course, so that you'll have all the m
 Now you should have all the materials for the course organized in the different directories. 
 
 #####Side bar: more on git 
-If you want to practice more with git, now that you have an account and the program installed, you can make your own new repository (***do this online instead of locally to simplify things***) for your own files/changes that you have for this workshop, within terminal in the following way:
+If you want to practice more with git, now that you have an account and the program installed, you can make your own new repository (***do this online instead of locally to simplify things***) for your own files/changes that you have for this workshop, within shell in the following way:
 
 	git init ##within the folder you want to work from 
 	git clone <web-address-of-new-directory>
@@ -156,14 +157,14 @@ Awesome!! now we can get started with the real stuff.... analyzing/processing ou
 
 ###2. Demultiplexing your dataset with Stacks.
 
-NOTE: **The first step in any RADseq library is always demultiplexing. You are now picking out the barcode reads which are found at the beginning of your illumina read in order to separate them into the individual samples. You only need two things, the code that you will use, and a barcodes/samples file where you have BOTH barcodes (adapter and primer index) and the name you want you sample to be (otherwise the file name will be the barcode, which is zero informative for any human being). Naming the files in a smart way will save headaches down the line. Also, if you have repeated barcodes across different libraries, then not changing the names from the default barcode names will mix your samples eventually. ** 
+NOTE: **The first step in any RADseq library is always demultiplexing. You are now picking out the barcode reads which are found at the beginning of your illumina read in order to separate them into the individual samples. You only need two things, the code that you will use, and a barcodes/samples file where you have BOTH barcodes (adapter and primer index) and the name you want your sample to have (otherwise the file name will be the barcode, which is zero informative for any human being). Naming the files in a smart way will save headaches down the line. Also, if you have repeated barcodes across different libraries, then not changing the names from the default barcode names will mix your samples eventually. ** 
 
 
 #####2.1. Setting up the barcodes files
 
 De-multiplexing is performed using the program [process_radtags](http://creskolab.uoregon.edu/stacks/comp/process_radtags.php) individually for each library within its directory (you can do it all at once, if barcodes are not the same, but let's do it separately for repetition and practice).
 
-Other than the raw data, we need only a single input file for this step, the barcodes file. This file has all the info to pick out the combinatorial barcodes from your raw sequence reads, and it will split them up by sample name, according to your file. I have written up a [single](https://github.com/pesalerno/Genomics-Intro-workshop/tree/master/1-demultiplexing) barcodes file, so you need to build the other. 
+Other than the raw data, we need only a single input file for this step, the barcodes file. This file has all the info to pick out the combinatorial barcodes from your raw sequence reads, and it will split them up by sample name, according to your file. I have written up a [single](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/1-demultiplexing/barcodes-Stef-3.txt) barcodes file, so you need to build the other. 
 
 You can secure copy this file that is now on your git directory on your computer into your directory in the cluster:
 
@@ -204,7 +205,7 @@ Now, build the same input file but for library ***Stef_4***. The names of the se
 
 And it has the exact same adapters as the first library, but with a different Index primer (can you figure out which one it is??). 
 
-**WARNING**: _NEVER_ edit text files in word/excel or something similar... it needs to be in a simple text editor such as text wrangler or BBedit. Also, always edit these files while seeing "invisible characters". 
+**WARNING**: _NEVER_ edit text files in word/excel or something similar... it needs to be in a simple text editor such as text wrangler or BBedit. Also, always edit these files while seeing "invisible characters"... it's good practice to avoid unnecessary headaches! 
 
 #####2.3. De-multiplexing and commands
 
@@ -244,7 +245,7 @@ then open the blank file to beign editing:
 copy/paste the text for the job scheduler on the first line of the file, then copy/paste the commands for process_radtags. The file should be in the directory where your raw data folder is located (not within it) and then you can specify where your raw reads are located with the raw reads folder name. 
 
 
-To make the other process_radtags shell script for submitting the second demultiplexing job, copy the file into the same directory in order to save with a different name:
+To make the other process_radtags shell script for submitting the second demultiplexing job, copy the file into the other demultiplexing directory in order to save with a different name:
 
 	cp process-rads-Stef3.sh ./Stef4/process-rads-Stef4.sh
 
@@ -252,7 +253,7 @@ now edit the second .sh file to make sure it's running the appropriate data and 
 
 #####2.4. Submit job on cluster
 
-To submit your job on the cluster (this will be specific to each cluster), all you have to do is write the submit command followed by the name of your file:
+To submit your job on the cluster (this may be different depending on cluster), all you have to do is write the submit command followed by the name of your file:
 
 	qsub name-of-job.sh
 
@@ -318,7 +319,7 @@ Uh oh.... looks like we have FIVE individuals with VERY little data!!! [Oh no!](
 Then, count your reads (which will take a cuouple of minutes and will print to your screen):
 
 	echo -e 'SAMPLE_ID_FULL\tNUM_READS'
-	for file in ~/path/to/denovo-map/*.fq
+	for file in ~/path/to/denovo-map/*.fq ##edit your path!!
 	do
 	echo -n $(basename $file .fq)$'\t'
 	cat $file | grep '^@.*' | wc -l
@@ -420,61 +421,24 @@ k | 3 | 2 | 2 | 5 |
 ----------------------------------------------
 ----------------------------------------------
 
+###5. Running *populations* and correcting for hapstats
+
+#####5.1. Setting up your popmap file
+The popmap file is simply a list of all your individuals (i.e. the file names) similar to what you had to input for denovo_map, but without the file termination (as in, excluding fastq.gz). This list is in the first column, and the second column has the population that we've assigned to each of these individuals. In this case, we only have three populations, so we've named them 1, 2, and 3; though we could also name them as a short string of characters (such as ER, CH, AB). I've built the [popmap file](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/3-SNP-matrix/popmap_Stefania.txt) for you! But you should try to make this on your own for practice. 
+
+#####5.2. Setting up your populations parameters and permutations
+You can start filtering your dataset here, though you can do much more filtering later on in something like R, sometimes you want to avoid dealing with a giant dataset of 200 thousand SNPs when you're sure you will filter out most of it due to missing data!! so we can set some baseline filters and use different parameter settings to see what our SNP output looks like. 
+
+One thing we're sure we want is SNPs that are present in all three of our populations (if we had many more populations, and perhaps only few individuals or high divergence of some of them, then we might want to set this up differently). For this, we set the -p flag at 3. the other main parameter to vary is -r, which is hte percent missing data you will allow per population to keep each SNP. In this case, we will start by setting a low bar of 50% (-r 0.5). The other important flag is --write_random_snp... since we don't have a reference genome, and we can have several snps within a read, we (for now) only want to keep a single snp per read so that we can "assume" our snps are not linked. However, we want those snps kept to be random (not the first or the last) in case something odd went on during Illumina sequencing (which has been observed....). The last few flags are the types of output we want. 
+
+	populations -b 1 -P ./path/to/denovo-1 -M ./path/to/denovo/popmap_Xari.txt  -t 36 -p 3 -r 0.5 --write_random_snp --structure --genepop --vcf
 
 
 
-/
-
-/
-
-/
-
-/
-
-/
-
-/
-
-/
-
-/
-
-/
-
-
-
-
-
-------------------------------------
-
-
-######4. running program populations for exporting SNP matrix
-
-I'm running populations with the filters for keeping 50% of SNPs that are present in each populations and with two settings for numbers of populations kept. Here is the popmap for [*Xantusia*](https://github.com/pesalerno/Pseudacris-island-genomics/blob/master/popmap_Xari.txt) and the popmap for [*Pseudacris*](https://github.com/pesalerno/Pseudacris-island-genomics/blob/master/popmap-Pseu.txt). 
-
-The script for populations for ***Xantusia*** and for **Pseudacris** was:
-
-	populations -b 1 -P ./denovo-1 -M ./popmap_Xari.txt  -t 36 -p 6 -r 0.5 --write_random_snp --structure --genepop --vcf
-
-I ran this twice, first with 6/7 populations (-p 6), and second with all populations (-p 7).I tried to run the filter of minor allele frequency (**--min_maf**) and it kept failing, maybe I need to upgrade version of Stacks, or maybe I don't know how to set it! This is why I saved it in **--vcf** format so that it can be viewed and filtered in [GATK](https://www.broadinstitute.org/gatk/) easily (or other variant calling format software).
-
-The total number of SNPs were:
-
-
-- ***Xantusia*** p=6 => 7739 snps
-	
-- ***Xantusia*** p=7 => 1319 snps 
-
-- ***Pseudacris*** p=6 => 36921 snps
-
-- ***Pseudacris*** p=7 => 36921 snps (did I make a mistake in the previous one? this one's correct according to script). it's just odd they're identical.... 
-
-
-Just out of curiosity, running ***Pseudacris*** again with a much more stringent setting of r=0.8 to see how many SNPs are still kept. 
-
-Based on number of SNPs, it's already suggesting that ***Xantusia*** has a much higher divergence among populations.... 
-
--> When doing -p7 -r 0.7 for ***Xantusia*** you get ZERO SNPs.... which means that there is either a huge amount of missing data, or that the mainland population is too divergent for this constraint.... 
+_____________________________________
+______________________________________
+_____________________________________
+____________________________________
 
 
 ##Step 4: Filter data with haplotype corrections in Stacks
