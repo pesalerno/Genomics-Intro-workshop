@@ -3,3 +3,6 @@
 #PBS -M yourEmail@address.com
 #PBS -m abe
 #PBS -N NameOfJob
+
+cd $PBS_O_WORKDIR
+
