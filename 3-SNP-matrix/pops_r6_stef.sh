@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -q q8 1w
-#PBS -M patriciasalerno@gmail.com
+#PBS -M yourEmail@address.com
 #PBS -m abe
 #PBS -N pops-r6
 

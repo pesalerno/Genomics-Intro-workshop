@@ -366,7 +366,7 @@ And finally delete the last \ from the last line of sequence so that the program
 
 
 
-#####4.3. Setting up the denovo-map specifications to run a first time.
+#####4.2. Setting up the denovo-map specifications to run a first time.
 
 We can now add the specifications to denovo_map.pl BEFORE the list of sequences, and it should be like this:
 
@@ -380,7 +380,7 @@ We can now add the specifications to denovo_map.pl BEFORE the list of sequences,
 Etc.... (as in, followed by all your other sequences). So, the final file should look like [this](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/2-denovo-map/denovo-map-test-2.txt), though you need to modify your personal information and path. 
 
 
-#####4.2. Setting up denovo-map permutations for parameter testing
+#####4.3. Setting up denovo-map permutations for parameter testing
 
 Running [denovo_map](http://catchenlab.life.illinois.edu/stacks/comp/denovo_map.php) is not a complicated process... but since different datasets can be very sensitive to parameter settings, we need to explore our dataset with different parameter combinations in order to decide what's the best approach (keeping good data, but not overfiltering). 
 
@@ -424,16 +424,17 @@ k | 3 | 2 | 2 | 5 |
 ###5. Running *populations*
 
 #####5.1. Setting up your popmap file
-The popmap file is simply a list of all your individuals (i.e. the file names) similar to what you had to input for denovo_map, but without the file termination (as in, excluding fastq.gz). This list is in the first column, and the second column has the population that we've assigned to each of these individuals. In this case, we only have three populations, so we've named them 1, 2, and 3; though we could also name them as a short string of characters (such as ER, CH, AB). I've built the [popmap file](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/3-SNP-matrix/popmap_Stefania.txt) for you! But you should try to make this on your own for practice. 
+The popmap file is simply a list of all your individuals (i.e. the file names) similar to what you had to input for denovo_map, but without the file termination (as in, excluding fastq.gz). This list is in the first column, and the second column has the population that we've assigned to each of these individuals. In this case, we only have three populations, so we've named them 1, 2, and 3; though we could also name them as a short string of characters (such as ER, CH, AB). I've built the [popmap file](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/3-SNP-matrix/popmap-Stefania-c.txt) for you! But you should try to make this on your own for practice. 
 
 #####5.2. Setting up your populations parameters and permutations
-You can start filtering your dataset here, though you can do much more filtering later on in something like R, sometimes you want to avoid dealing with a giant dataset of 200 thousand SNPs when you're sure you will filter out most of it due to missing data!! so we can set some baseline filters and use different parameter settings to see what our SNP output looks like. 
+In the [populations](http://catchenlab.life.illinois.edu/stacks/comp/populations.php) program you essentially filter your SNP matrix and decide which outputs you want. 
 
-One thing we're sure we want is SNPs that are present in all three of our populations (if we had many more populations, and perhaps only few individuals or high divergence of some of them, then we might want to set this up differently). For this, we set the -p flag at 3. the other main parameter to vary is -r, which is hte percent missing data you will allow per population to keep each SNP. In this case, we will start by setting a low bar of 50% (-r 0.5). The other important flag is --write_random_snp... since we don't have a reference genome, and we can have several snps within a read, we (for now) only want to keep a single snp per read so that we can "assume" our snps are not linked. However, we want those snps kept to be random (not the first or the last) in case something odd went on during Illumina sequencing (which has been observed....). The last few flags are the types of output we want. 
+You can start filtering your dataset here, though you can do much more filtering later on in something like R, sometimes you want to avoid dealing with a giant dataset of 200 thousand SNPs when you're sure you will filter out most of it due to missing data!! So we can set some baseline filters and use different parameter settings to see what our SNP output looks like. 
 
-	populations -b 1 -P ./path/to/denovo-1 -M ./path/to/denovo/popmap_Xari.txt  -t 36 -p 3 -r 0.5 --write_random_snp --structure --genepop --vcf
+One thing we're sure we want for this dataset specifically is SNPs that are present in all three of our populations (if we had many more populations, and perhaps only few individuals or high divergence of some of them, then we might want to set this up differently). For this, we set the -p flag at 3. the other main parameter to vary is -r, which is the percent missing data you will allow per population to keep each SNP. In this case, we will start by setting a low bar of 40% (-r 0.4). The other important flag is --write_random_snp... since we don't have a reference genome, and we can have several snps within a read, we (for now) only want to keep a single snp per read so that we can "assume" our snps are not highly linked. However, we want those snps kept to be random (not the first or the last) in case something odd went on during Illumina sequencing (which has been observed....). The last few flags are the types of output we want. 
 
-You should try to set up other settings. In this case, we will try out what happens when we set -r 0.4, -r 0.5, and -r 0.6. How does the SNP matrix look? too few SNPs with the highest threshold? too many with the lower one?? 
+
+I have set up a [populations file](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/3-SNP-matrix/pops_r6_stef.sh) that's ready to go for p=3, r=0.6. You should try to set it up other settings. In this case, we will try out what happens when we set -r 0.4, -r 0.5, and -r 0.6. How does the SNP matrix look? too few SNPs with the highest threshold? too many with the lower one?? 
 
 
 
@@ -449,7 +450,7 @@ This [program](http://catchenlab.life.illinois.edu/stacks/comp/rxstacks.php) (in
 Even though you don't have a reference genome, you should still filter out loci that seem to be linked. You do this after you have your SNP matrix and the linkage estimation is by SNP (allele) instead of using the entire sequence, which makes computation faster. You should also filter out minor allele frequencies of 0.05, which seems to be the standard for most of these SNP approaches. However, this runs the risk of overfiltering alleles that may be informative, for example, for inferring population expansion events. These filters are usually set in R, with different packages, for example in [genetics](http://svitsrv25.epfl.ch/R-doc/library/genetics/html/LD.html) or with [pegas](https://cran.r-project.org/web/packages/pegas/pegas.pdf).
 
 #####c. Filter out weird Blast searches
-It's quite likely your data is contaminated with things that are obviously not your species of interest. So you can do a massive blast search and filter out anything that is an obvious hit to something that is not even close (for example, bacteria of you're sequencing a frog!). 
+It's quite likely your data is contaminated with things that are obviously not your species of interest. So you can do a massive blast search and filter out anything that is an obvious hit to something that is not even close (for example, bacteria if you're sequencing a frog!). 
 
 ###7. Running basic population analyses in R 
 We will do some basic analyses in the R package [adegenet](http://adegenet.r-forge.r-project.org/), which is a fantastic package to get started, mostly because the developers have put a LOT of effor into making really handy tutorials and documentation.  
