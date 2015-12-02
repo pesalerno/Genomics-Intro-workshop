@@ -433,7 +433,7 @@ One thing we're sure we want is SNPs that are present in all three of our popula
 
 	populations -b 1 -P ./path/to/denovo-1 -M ./path/to/denovo/popmap_Xari.txt  -t 36 -p 3 -r 0.5 --write_random_snp --structure --genepop --vcf
 
-You should try to set up other settings. In this case, we will try out what happens when we set -r 0.6, -r 0.7, and -r 0.8. How does the SNP matrix look? too few SNPs with the highest threshold? too many with the lower one?? 
+You should try to set up other settings. In this case, we will try out what happens when we set -r 0.4, -r 0.5, and -r 0.6. How does the SNP matrix look? too few SNPs with the highest threshold? too many with the lower one?? 
 
 
 
@@ -451,6 +451,10 @@ Even though you don't have a reference genome, you should still filter out loci 
 #####c. Filter out weird Blast searches
 It's quite likely your data is contaminated with things that are obviously not your species of interest. So you can do a massive blast search and filter out anything that is an obvious hit to something that is not even close (for example, bacteria of you're sequencing a frog!). 
 
-###7. Running basic population analyes in R 
+###7. Running basic population analyses in R 
 We will do some basic analyses in the R package [adegenet](http://adegenet.r-forge.r-project.org/), which is a fantastic package to get started, mostly because the developers have put a LOT of effor into making really handy tutorials and documentation.  
+
+This, for example, is one of the most useful [basic tutorials](http://adegenet.r-forge.r-project.org/) I've ever found! 
+
+When you try [this R script](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/4-quick-R-analyses/PCA_stef.R) for the first time with [this SNP matrix](https://github.com/pesalerno/Genomics-Intro-workshop/blob/master/4-quick-R-analyses/Stef_r7_1022-c.stru), it looks like some individuals may have too much missing data... can you identify them, remove them, remove those individuals, and rerun the script? do things look better/more logical? 
 
