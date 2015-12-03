@@ -1,5 +1,5 @@
 library("adegenet")
-myFile <- read.structure("Stef_r7_1022-c.stru", onerowperind=FALSE, n.ind=60, n.loc=1022, col.lab=1)
+myFile <- read.structure("Stef_r7_1022-short.stru", onerowperind=FALSE, n.ind=49, n.loc=1022, col.lab=1)
 myFile
 
 
@@ -16,12 +16,11 @@ pca1
 s.label(pca1$li)
 ###this first graph is useful for identifying individua samples that fall within the origin, indicating it's an issue of too much missing data
 
-
 		
 ###Plotting with colors		
 myCol <-c("orange2", "darkblue", "red")
 s.class(pca1$li, fac=pop(myFile),
-		col=myCol, axesel=FALSE, cstar=0, cpoint=1.5)
+		col=myCol, axesel=FALSE, cstar=0)
 
 
 
@@ -61,3 +60,16 @@ contrib <- loadingplot(dapc$var.contr, axis=2, thres=.07, lab.jitter=1)
 ####ASSIGNMENT TO GROUPS AND CLUSTERING
 
 assignplot(dapc)
+
+
+********************************************
+********************************************
+#####GENERATING A CLUSTER GRAPH#####
+
+X <- tab(myFile, freq=TRUE, NA.method="mean") ###this is in the tutorial online, but doesn't work for me
+D <- dist(myFile)
+
+h1 <- hclust(D, method="complete")
+plot(h1, labels=TRUE)
+
+
